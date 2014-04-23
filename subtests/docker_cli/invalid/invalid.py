@@ -99,11 +99,11 @@ class invalid_base(subtest.SubSubtest):
         arg_inpars_lst = self.sub_stuff['arg_inpars']
         arg_invals_lst = self.sub_stuff['arg_invals']
 
-        self.loginfo("Test the invalid charactors for the parameter")
+        self.logdebug("Test the invalid charactors for the parameter")
         cmdresult_inpara = self.add_arg_run(self.config['section'],
                                             arg_inpars_lst,
                                             self.sub_stuff['tag'])
-        self.loginfo("Test the invalid charactors for the parameter value")
+        self.logdebug("Test the invalid charactors for the parameter value")
         cmdresult_invals = self.add_arg_run(self.config['section'],
                                             arg_invals_lst,
                                             self.sub_stuff['tag'])
@@ -117,24 +117,24 @@ class invalid_base(subtest.SubSubtest):
         for cmdresult in self.sub_stuff['cmdresult_inpara']:
             if exp_out_inpara not in str(cmdresult):
                 self.sub_stuff['result_inparam'] &= True
-                self.logwarning("It's failed to find the expected '%s' in "
-                                "cmdresult '%s'" % (exp_out_inpara,
-                                                    cmdresult))
-            else:
-                self.loginfo("It's successful to find the expected '%s' in "
+                self.loginfo("It's failed to find the expected '%s' in "
                              "cmdresult '%s'" % (exp_out_inpara,
                                                  cmdresult))
+            else:
+                self.logdebug("It's successful to find the expected '%s' in "
+                              "cmdresult '%s'" % (exp_out_inpara,
+                                                  cmdresult))
 
         for cmdresult in self.sub_stuff['cmdresult_invals']:
             if exp_out_invals not in str(cmdresult):
                 self.sub_stuff['result_invalus'] &= True
-                self.logwarning("It's failed to find the expected '%s' in "
-                                "cmdresult '%s'" % (exp_out_invals,
-                                                    cmdresult))
-            else:
-                self.loginfo("It's successful to find the expected '%s' in "
+                self.loginfo("It's failed to find the expected '%s' in "
                              "cmdresult '%s'" % (exp_out_invals,
                                                  cmdresult))
+            else:
+                self.logdebug("It's successful to find the expected '%s' in "
+                              "cmdresult '%s'" % (exp_out_invals,
+                                                  cmdresult))
 
     def postprocess(self):
         super(invalid_base, self).postprocess()
