@@ -946,6 +946,30 @@ Verify that could not run a container which is already running.
 *  The ``remove_after_test`` specifies wether to remove the
    container created during the test.
 
+``docker_cli/invalid`` Sub-test
+=================================
+
+Simple test that checks the success of the ``docker run`` command.
+It will run container using the invalid charactor, and then verify that
+it was not allowed.
+
+``docker_cli/invalid`` Prerequisites
+-------------------------------------
+
+*  Docker daemon is running and accessable by it's unix socket.
+
+``docker_cli/invalid`` Configuration
+--------------------------------------
+
+* The ``section`` specifies which section to test.
+* The ``subsubtests`` specifies which subtests to run.
+*  Customized configuration for ``invalid_run_params``,
+   ``expected_result`` and ``invalid_pars_expected_output``,
+   ``invalid_vals_expected_output`` and ``input_docker_tag``,
+   and optionally ``docker_registry_host`` and/or ``docker_registry_user``.
+   i.e. Copy ``config_defaults/defaults.ini`` to ``config_custom/defaults.ini``
+   and modify the values.
+
 ----------------------------------
 Dockertest API Reference
 ----------------------------------
