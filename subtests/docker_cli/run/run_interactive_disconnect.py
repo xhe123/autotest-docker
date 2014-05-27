@@ -7,7 +7,6 @@
 # Okay to be less-strict for these cautions/warnings in subtests
 # pylint: disable=C0103,C0111,R0904,C0103
 
-import signal
 import time
 import os
 
@@ -15,7 +14,7 @@ from autotest.client import utils
 from dockertest.dockercmd import AsyncDockerCmd, DockerCmd
 from dockertest.containers import DockerContainers
 from dockertest.output import OutputGood
-from run_simple import run_base
+from run import run_base
 
 
 class run_interactive_disconnect(run_base):
@@ -71,7 +70,7 @@ class run_interactive_disconnect(run_base):
             pass
 
     def postprocess(self):
-        super(run_base, self).postprocess()  # Prints out basic info
+        super(run_interactive_disconnect, self).postprocess()
         # Fail test if bad command or other stdout/stderr problems detected
 
         OutputGood(self.sub_stuff['cmdresult'])
@@ -88,11 +87,14 @@ class run_interactive_disconnect(run_base):
         self.failif(not str_in_output in cmd_stdout_attach,
                     "Command %s output must contain %s but doesn't."
                     " Detail:%s" %
-                        (self.config["bash_cmd"],
-                         str_in_output,
-                         self.sub_stuff['cmdresult_attach']))
+                   (self.config["bash_cmd"],
+                    str_in_output,
+                    self.sub_stuff['cmdresult_attach']))
 
     def cleanup(self):
         super(run_interactive_disconnect, self).cleanup()
         c_name = self.sub_stuff["rand_name"]
-        self.sub_stuff["cont"].kill_container_by_name(c_name)
+        try:
+            self.sub_stuff["cont"].kill_container_by_name(c_name)
+        except KeyError:
+            pass  # removal was the goal

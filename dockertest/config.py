@@ -11,7 +11,6 @@ unit-tested but not intended for wide-spread general use.
 
 from ConfigParser import SafeConfigParser, NoSectionError
 from collections import MutableMapping
-import logging
 import os.path
 import sys
 
@@ -41,17 +40,14 @@ class ConfigSection(object):
     """
     Wraps SafeConfigParser with static section handling
 
+    :param defaults: dict-like containing default keys/values
+    :param section: name of section to initially bind to
+
     :note: Not an exact interface reproduction, some functionality
            left out!
     """
 
     def __init__(self, defaults, section):
-        """
-        Create new config parser
-
-        :param defaults: dict-like containing default keys/values
-        :param section: name of section to initially bind to
-        """
         self._section = section
         # SafeConfigParser is old-style, and we're changing method parameters
         self._scp = SafeConfigParser(defaults)
@@ -148,6 +144,17 @@ class ConfigSection(object):
         """
         Convert/Return value assigned to key named option
         """
+        try:
+            value = self._scp.get(self._section, option).lower().strip()
+            positives = ("yes", "true")
+            negatives = ("no", "false")
+            if value in positives:
+                return True
+            if value in negatives:
+                return False
+            # try regular way
+        except AttributeError:
+            pass  # try regular way
         return self._scp.getboolean(self._section, option)
 
     def set(self, option, value):
@@ -197,15 +204,16 @@ class ConfigSection(object):
 
 
 class ConfigDict(MutableMapping):
-    """
+    r"""
     Wraps ConfigSection instance in a dict-like, hides SafeConfigParser details.
+
+    :param section: Section name string to represent
+    :param defaults: dict-like of default parameters (lower-case keys)
+    :param \*args:  Passed through to dict-like super-class.
+    :param \*\*dargs:  Passed through to dict-like super-class.
     """
 
     def __init__(self, section, defaults=None, *args, **dargs):
-        """
-        Initialize a new dict-like object for section using optional defaults
-        dict-like object.
-        """
         self._config_section = ConfigSection(defaults=defaults,
                                              section=section)
         super(ConfigDict, self).__init__(*args, **dargs)
@@ -262,8 +270,13 @@ class ConfigDict(MutableMapping):
 
 
 class Config(dict):
-    """
+    r"""
     Global dict-like of dict-like(s) per section with defaulting values.
+
+    :param \*args: Same as built-in python ``dict()`` params.
+    :param \*\*dargs: Same as built-in python ``dict()`` params.
+    :return: Regular 'ole python dictionary of global config also as
+             python dictionaries (cached on first load)
     """
     #: Public instance attribute cache of defaults parsing w/ non-clashing name
     defaults_ = None
@@ -273,12 +286,6 @@ class Config(dict):
     _singleton = None
 
     def __new__(cls, *args, **dargs):
-        r"""
-        Return copy of dict holding parsed defaults + custom configs
-
-        :param \*args & \*\*dargs: Same as built-in python ``dict()`` params.
-        :return: Regular 'ole python dictionary of global config dicts.
-        """
         if cls._singleton is None:
             # Apply *args, *dargs _after_ making deep-copy
             cls._singleton = dict.__new__(cls)
@@ -315,8 +322,6 @@ class Config(dict):
             fullpath = os.path.join(dirpath, filename)
             if (filename.startswith('.') or
                 not filename.endswith('.ini')):
-                logging.warning("Skipping unknown config file '%s'",
-                                fullpath)
                 continue
             config_file = open(fullpath, 'r')
             # Temp use sections variable for reading sections list
@@ -361,6 +366,15 @@ class Config(dict):
                 sec_copy[cfg_key] = cfg_value
             the_copy[sec_key] = sec_copy
         return the_copy
+
+
+def get_as_list(value, sep=","):
+    """
+    Return config value as list separated by sep.
+    value = "a,b , c, dd"
+    return ["a","b","c","dd"]
+    """
+    return [val.strip() for val in value.split(sep)]
 
 
 def none_if_empty(dict_like, key_name=None):

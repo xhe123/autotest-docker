@@ -12,9 +12,8 @@ docker start full_name
 """
 
 from autotest.client.shared import error
-from start import start_base, short_term_app, DockerContainersCLIRunOnly
+from start import short_term_app, DockerContainersCLIRunOnly
 from dockertest.dockercmd import DockerCmd
-from dockertest.output import OutputGood
 
 # Okay to be less-strict for these cautions/warnings in subtests
 # pylint: disable=C0103,C0111,R0904,C0103
@@ -35,9 +34,8 @@ class long_term_app(short_term_app):
                                     " test: %s", results)
 
     def postprocess(self):
-        super(start_base, self).postprocess()
+        super(long_term_app, self).postprocess()
         # Raise exception if problems found
-        OutputGood(self.sub_stuff['cmdresult'])
         if self.config["docker_expected_result"] == "PASS":
             self.failif(self.sub_stuff['cmdresult'].exit_status != 0,
                         "Non-zero start exit status: %s"

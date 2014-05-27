@@ -8,7 +8,6 @@ Test output of docker start command
 """
 
 import time
-import random
 from autotest.client.shared import error
 from dockertest.subtest import SubSubtest
 from dockertest.output import OutputGood
@@ -87,9 +86,9 @@ class start_base(SubSubtest):
     def complete_docker_command_line(self):
         cmds = []
 
-        if (self.config["docker_attach"]):
+        if self.config["docker_attach"]:
             cmds.append("-a")
-        if (self.config["docker_interactive"]):
+        if self.config["docker_interactive"]:
             cmds.append("-i")
 
         cmds.append(self.sub_stuff["container"].long_id)
@@ -98,10 +97,13 @@ class start_base(SubSubtest):
 
         return cmds
 
-    def postprocess(self):
-        super(start_base, self).postprocess()
+    def outputgood(self):
         # Raise exception if problems found
         OutputGood(self.sub_stuff['cmdresult'])
+
+    def postprocess(self):
+        super(start_base, self).postprocess()
+        self.outputgood()
         if self.config["docker_expected_result"] == "PASS":
             self.failif(self.sub_stuff['cmdresult'].exit_status != 0,
                         "Non-zero start exit status: %s"
@@ -125,7 +127,6 @@ class start_base(SubSubtest):
                     self.wait_for_container_death(cont)
                 except Exception, e:
                     print e
-                    pass
                 self.sub_stuff["conts_obj"].remove_by_obj(cont)
 
     def wait_for_container_death(self, container_obj):

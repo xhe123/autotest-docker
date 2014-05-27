@@ -16,10 +16,6 @@
 Docker Autotest
 ================
 
-**Warning:** The client-test code here is highly experimental and possibly
-temporary. Interfaces/Usage could change, or the entire contents could disappear
-without warning.
-
 .. sectnum::
 
 ----------------
@@ -77,7 +73,7 @@ Prerequisites
     *  Git (and basic familiarity with it's operation)
     *  Python 2.6 or greater (but not 3.0)
     *  Optional (for building documentation), ``make`` and ``python-sphinx``
-       or the equivilent for your platform (supplying the ``sphinx-build``
+       or the equivalent for your platform (supplying the ``sphinx-build``
        executable)
     *  Autotest 0.15.0 or later, specific version is configured.
 
@@ -246,24 +242,64 @@ within ``config_custom`` will override anything found under
 ``config_defaults``.  Nothing except for the example ``config_custom/example.ini``
 should be checked into version control.
 
-Configuration files use the familiar ``ini`` style format with separate
+Organization
+==============
+
+Sections
+---------------
+
+Configuration files use the familiar *ini* style format with separate
 sections (e.g. ``[<section name>]``) preventing option names from colliding.
-All configuration files are loaded into a single name-space, containing
-sub-name-spaces for each section. Section names which exactly match a subtest
-module name, are automatically loaded (see Subtests_).
+All configuration files are loaded into a single name-space, divided by
+each section.   Section names can be arbitrary, however those which exactly
+match a subtest or subsubtest's name, will be automatically loaded (see Subtests_).
+
+Defaults
+----------------
 
 The Default, global values for **all** sections are located within the
 special ``defaults.ini`` file's ``DEFAULTS`` section.  These option
-names and values stand in for same-named options that are undefined
-in any section. See `Default configuration options`_ for more details.
+names and values are supplied for all sections which do not contain
+a identical named option. See `Default configuration options`_ for more details.
 
-Optional inline-value substitution is supported using the ``%(<option>)s`` format,
-where ``<option>`` is the name of another option.  The source option
-name may not reside outside the reference section, though options
-in the special ``DEFAULTS`` section are always available.
+Formatting
+=============
+
+Long values
+----------------
+
+Long values may be continued onto the next line by prefixing any run of one or
+more horizontal-whitespace characters with a newline.  For example:
+
+     option_name = This option value is super duper long,
+                   but will be un-folded into a single string with
+                   <---- all this whitespace replaced by a single space.
+
+In this case, the runs of multiple whitespace following the newline will
+be folded into a single instance, and substituted for the previous newline.
+
+Value substitution
+---------------------
+
+Within each section, optional inline-value substitution is supported
+using the ``%(<option>)s`` token format.  Where ``<option>`` is the
+literal name of another option.  The referenced option must reside
+in the same section or in the special ``DEFAULTS`` section. This is
+useful when multiple option values need to be different but contain a
+shared element.
 
 :Note: The relative locations of files under ``config_defaults`` and ``config_custom``
        does not matter.  Multiple sections may appear in the same file.
+
+Type-conversion
+-----------------------
+The config parser will attempt to parse each item in the following order:
+integers, booleans, floats, then strings.
+
+*  Integers are in the form of simple numbers, eg: "123"
+*  Booleans are in the form 'yes' or 'true', 'no' or 'false' (case insensitive)
+*  Floats are in the form of numbers with decimals eg: "123.456" or "123.0"
+*  All other items will be returned as strings.
 
 ------------------------
 Versioning Requirements
@@ -295,6 +331,10 @@ Subtest Modules
 The following sections detail specific sub-tests, their configuration
 and any prerequisites or setup requirements.
 
+.. contents::
+   :depth: 1
+   :local:
+
 Default configuration options
 ================================
 
@@ -313,7 +353,7 @@ file is loaded *either* from ``config_defaults`` *or* ``config_custom``.
    most tests to fail after changing dockertest API versions. This is
    intentional behavior and so this option must **not** be overriden
    in any default/bundled subtest configuration.  It **should** be
-   overriden in custom/private test configuration.
+   overridden in custom/private test configuration.
 *  The ``autotest_version`` option specifies the minimum version
    of the autotest framework that is required.  It may be overridden
    by subtests to indicate they require a specific **later** version
@@ -332,9 +372,10 @@ file is loaded *either* from ``config_defaults`` *or* ``config_custom``.
    of seconds to allow any single command to complete.
 *  Since all tests run by default (when no ``--args`` CSV
    list is used), it could be difficult to skip just a single
-   or several tests while running all others.  Adding a config
-   ``enable = false`` (or ``no``) option to any config file
-   will turn off just that test.
+   or several tests while running all others.  The ``disable``
+   option may be specified in ``DEFAULTS`` or any subtest
+   and contains a comma-separated-list of subtest or sub-subtest
+   names to skip.
 
 ``example`` Sub-test
 =======================
@@ -369,7 +410,7 @@ The example subtest has no prerequisites.
 ``subexample`` Configuration
 -----------------------------
 
-Includes the requesite ``subsubtests`` CSV option, specifying
+Includes the requisite ``subsubtests`` CSV option, specifying
 the subtest names to include.  Their actual execution order
 us not defined.
 
@@ -381,7 +422,7 @@ Simple test that checks the output of the ``docker version`` command.
 ``docker_cli/version`` Prerequisites
 -------------------------------------
 
-Docker daemon is running and accessable by it's unix socket.
+Docker daemon is running and accessible by it's unix socket.
 
 ``docker_cli/version`` Configuration
 --------------------------------------
@@ -478,21 +519,24 @@ Ultra-simple test to confirm output table-format of docker CLI
 ``docker_cli/run_volumes`` Sub-test
 =======================================
 
-Attempt to read, then write a file from a host path volume inside
-a container.  Intended to test NFS, SMB, and other 'remote' filesystem
-mounts.
+*  volumes_rw: Attempt to read, then write a file from a host path volume inside
+   a container.  Intended to test NFS, SMB, and other 'remote' filesystem
+   mounts.
+*  volumes_one_source: Have multiple containers mount a directory and then write
+   to files in that directory simultaneously.
 
 ``docker_cli/run_volumes`` Prerequisites
 ---------------------------------------------
 
-*  Remove filesystems are mounted and accessable on host system.
+*  Remote filesystems are mounted and accessible on host system.
 *  Containers have access to read & write files w/in mountpoints
 
-``docker_cli/run_volumes`` Configuration
--------------------------------------------
-*  The ``host_paths`` and cooresponding ``cntr_paths`` are most important.
+``docker_cli/run_volumes/volumes_rw`` Configuration
+----------------------------------------------------
+*  The ``host_paths`` and corresponding ``cntr_paths`` are most important.
    They are the host paths and container paths comma-separated values to
-   test.  There must be 1:1 coorespondance between CSVs of both options
+   test.  There must be 1:1 correspondence between CSVs of both options.
+   The lists must also be the same length.
 *  ``run_template`` allows fine-tuning the options to the run command.
 *  The ``cmd_template`` allows fine-tuning the command to run inside
    the container.  It makes use of shell-like value substitution from
@@ -503,6 +547,16 @@ mounts.
    and modify the values.
 *  The ``wait_stop`` option specifies the time in seconds to wait after all
    docker run processes exit.
+
+``docker_cli/run_volumes/volumes_one_source`` Configuration
+------------------------------------------------------------
+*  The ``num_containers`` is the number of containers to run concurrently.
+*  The ``cmd_timeout`` is the timeout for each container's IO command.
+*  The ``cntr_path`` is where to mount the volume inside the container.
+*  The ``exec_command`` is the command each container should run.  This
+   should be an IO command that writes to a file at ${write_path} which will be
+   inside the mounted volume.  This command should also take time to allow for
+   taking place while the other containers are also writing IO.
 
 ``docker_cli/rm`` Sub-test
 =======================================
@@ -545,7 +599,7 @@ Several variations of running the dockerhelp command.
 ``docker_cli/run_simple`` Sub-test
 =====================================
 
-Three simple subsubtests that verify exit status and singnal pass-through capability
+Three simple subsubtests that verify exit status and signal pass-through capability
 
 ``docker_cli/run_simple`` Prerequisites
 -----------------------------------------
@@ -641,7 +695,7 @@ appear after container finishes and is removed.
 *  Historical events exist prior to running test (i.e.
    docker daemon hasn't been restarted in a while)
 *  Host clock is accurate, local timezone setup properly.
-*  Host clock does not change drasticly during test
+*  Host clock does not change drastically during test
 
 ``docker_cli/events`` Configuration
 --------------------------------------
@@ -778,7 +832,7 @@ Several variations of using ``docker start`` command
 *  The ``run_options_csv`` modifies the running container options.
 *  The ``container_name_prefix`` is prefix of the tested container followed by
    random characters to make it unique.
-*  The ``remove_after_test`` specifies wether to remove the container after
+*  The ``remove_after_test`` specifies whether to remove the container after
    the test
 
 ``docker_cli/kill`` Sub-test
@@ -867,11 +921,11 @@ Several variations of running the restart command
 *  The ``wait_options_csv`` modifies the wait command options.
 *  The ``exec_cmd`` modifies the container command. Note that in this tests
    you can specify per-container-exec_cmd using exec_cmd_$container.
-   This command has to containe ``exit $NUM``, which is used as docker exit
+   This command has to contain ``exit $NUM``, which is used as docker exit
    status and could contain ``sleep $NUM`` which signals the duration after
    which the container finishes.
 *  The ``wait_for`` specifies the containers the wait command should wait for.
-   you can use index of ``containers`` or ``_$your_string``. In the second
+   Use index of ``containers`` or ``_$your_string``. In the second
    case the leading character ``_`` will be removed.
 
 
@@ -884,7 +938,7 @@ It verifies the output against values obtained from userspace tools.
 ``docker_cli/info`` Prerequisites
 -------------------------------------
 
-*  Docker daemon is running and accessable by it's unix socket.
+*  Docker daemon is running and accessible by it's unix socket.
 *  ``dmsetup`` and ``du`` commands are available.
 
 ``docker_cli/info`` Configuration
@@ -902,12 +956,12 @@ copied successfully.
 ``docker_cli/cp`` Prerequisites
 -------------------------------------
 
-*  Docker daemon is running and accessable by it's unix socket.
+*  Docker daemon is running and accessible by it's unix socket.
 
 ``docker_cli/cp`` Configuration
 --------------------------------------
 
-*  The ``remove_after_test`` specifies wether to remove the
+*  The ``remove_after_test`` specifies whether to remove the
    container created during the test.
 
 ``docker_cli/insert`` Sub-test
@@ -920,12 +974,12 @@ it was inserted successfully.
 ``docker_cli/insert`` Prerequisites
 -------------------------------------
 
-*  Docker daemon is running and accessable by it's unix socket.
+*  Docker daemon is running and accessible by it's unix socket.
 
 ``docker_cli/insert`` Configuration
 --------------------------------------
 
-*  The ``remove_after_test`` specifies wether to remove the
+*  The ``remove_after_test`` specifies whether to remove the
    container created during the test.
 *  The ``file_url`` is the url to a file to be inserted during
    the test.
@@ -938,13 +992,137 @@ Verify that could not run a container which is already running.
 ``docker_cli/run_twice`` Prerequisites
 --------------------------------------
 
-*  Docker daemon is running and accessable by it's unix socket.
+*  Docker daemon is running and accessible by it's unix socket.
 
 ``docker_cli/run_twice`` Configuration
 --------------------------------------
 
-*  The ``remove_after_test`` specifies wether to remove the
+*  The ``remove_after_test`` specifies whether to remove the
    container created during the test.
+
+``docker_cli/diff`` Sub-test
+============================
+
+This set of tests modifies files within an image and then
+asserts that the changes are picked up correctly by ``docker diff``
+
+``docker_cli/diff`` Prerequisites
+---------------------------------
+
+*  Docker daemon is running and accessible by it's unix socket.
+
+``docker_cli/diff`` Configuration
+---------------------------------
+
+*  The ``remove_after_test`` specifies whether to remove the
+   container created during the test.
+*  ``command`` is a csv arg list to ``docker run`` that specifies
+   how a test will modify a file for the test
+*  ``files_changed`` is a csv list of expected change types and the
+   files/directories that are changed.  It is in the form of:
+   <change type 1>,<path 1>,<change type 2>,<path 2> and so on.
+
+``docker_cli/invalid`` Sub-test
+=================================
+
+Simple test that checks the success of the ``docker run`` command.
+It will run container using the invalid character, and then verify that
+it was not allowed.
+
+``docker_cli/invalid`` Prerequisites
+-------------------------------------
+
+*  Docker daemon is running and accessible by it's unix socket.
+
+``docker_cli/invalid`` Configuration
+--------------------------------------
+
+*  The ``section`` specifies which section to test.
+*  The ``subsubtests`` specifies which subtests to run.
+*  Customized configuration for ``invalid_run_params``,
+   ``expected_result`` and ``invalid_pars_expected_output``,
+   ``invalid_vals_expected_output`` and ``input_docker_tag``,
+   and optionally ``docker_registry_host`` and/or ``docker_registry_user``.
+   i.e. Copy ``config_defaults/defaults.ini`` to ``config_custom/defaults.ini``
+   and modify the values.
+
+``docker_cli/workdir`` Sub-test
+=================================
+
+Simple test that checks the ``docker run --workdir`` command could set workdir
+successfully if the dir is a valid path, and fails if it's not absolute path or
+not a path, like a file.
+
+``docker_cli/workdir`` Prerequisites
+-------------------------------------
+
+*  Docker daemon is running and accessible by it's unix socket.
+
+``docker_cli/workdir`` Configuration
+--------------------------------------
+
+*  The ``remove_after_test`` specifies whether to remove the
+   container created during the test.
+
+``docker_cli/dockerinspect`` Sub-test
+=====================================
+
+This is a set of subsubtests that test the inspect command.
+
+``docker_cli/dockerinspect`` Prerequisites
+------------------------------------------
+
+*  Docker daemon is running and accessible by it's unix socket.
+
+``docker_cli/dockerinspect`` Configuration
+------------------------------------------
+
+*  The ``remove_after_test`` specifies whether to remove the
+   containers created during the test.
+*  The ``subsubtests`` tells which subtests to run in this test group.
+
+``docker_cli/dockerinspect/inspect_container_simple`` Configuration
+--------------------------------------------------------------------
+
+*  ``check_fields`` specifies which fields to check the existence of when
+   running "docker inspect" on a container.
+
+``docker_cli/dockerinspect/inspect_all`` Configuration
+------------------------------------------------------
+
+* ``ignore_fields`` specifies which fields to ignore when checking all fields
+  when running "docker inspect" on a container.
+
+``docker_cli/dockerinspect/inspect_keys`` Configuration
+-------------------------------------------------------
+* note all of these fields are optional.  Leave them blank to skip
+  checking for them.
+* ``image_keys`` specifies which fields to check for in an image inspect
+* ``container_keys`` specifies which fields to check for in a container inspect
+* ``key_regex`` asserts that each key matches this regex
+
+``docker_cli/run_memory`` Sub-test
+==================================
+
+Simple test that checks the output of the ``docker run -m`` command.
+It verifies that if the container's cgroup resource ``memory.limit_in_bytes``
+equals the value passed or if the container can handle invalid value
+properly.
+
+``docker_cli/run_memory`` Prerequisites
+---------------------------------------
+
+*  Docker daemon is running and accessible by it's unix socket.
+
+``docker_cli/run_memory`` Configuration
+---------------------------------------
+*  The option ``remove_after_test`` specifies whether to remove the
+   container created during the test.
+*  Customized configuration for ``docker_repo_name``, ``docker_repo_tag``,
+   and optionally ``docker_registry_host`` and/or ``docker_registry_user``.
+   i.e. Copy ``config_defaults/defaults.ini`` to ``config_custom/defaults.ini``
+   and modify the values.
+*  The option ``positive``, sets the pass/fail logic for results processing.
 
 ``docker_cli/invalid`` Sub-test
 =================================
@@ -973,6 +1151,10 @@ it was not allowed.
 ----------------------------------
 Dockertest API Reference
 ----------------------------------
+
+.. contents::
+   :depth: 4
+   :local:
 
 Dockertest Package
 ========================
