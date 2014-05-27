@@ -1138,8 +1138,8 @@ it was not allowed.
 
 ``docker_cli/flag`` Configuration
 --------------------------------------
-
-*  The ``subsubtests`` specifies which subtests to run.
+*  The option ``remove_after_test`` specifies whether to remove the
+   container created during the test.
 *  Customized configuration for ``flag_args`` and ``searched_info``
    i.e. Copy ``config_defaults/defaults.ini`` to ``config_custom/defaults.ini``
    and modify the values.
