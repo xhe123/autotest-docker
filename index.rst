@@ -1124,27 +1124,23 @@ properly.
    and modify the values.
 *  The option ``positive``, sets the pass/fail logic for results processing.
 
-``docker_cli/invalid`` Sub-test
+``docker_cli/flag`` Sub-test
 =================================
 
-Simple test that checks the success of the ``docker run`` command.
-It will run container using the invalid charactor, and then verify that
+Simple test that checks the flag of the ``docker`` command.
+It will run container using the flag character, and then verify that
 it was not allowed.
 
-``docker_cli/invalid`` Prerequisites
+``docker_cli/flag`` Prerequisites
 -------------------------------------
 
-*  Docker daemon is running and accessable by it's unix socket.
+*  Docker daemon is running and accessible by it's unix socket.
 
-``docker_cli/invalid`` Configuration
+``docker_cli/flag`` Configuration
 --------------------------------------
 
-* The ``section`` specifies which section to test.
-* The ``subsubtests`` specifies which subtests to run.
-*  Customized configuration for ``invalid_run_params``,
-   ``expected_result`` and ``invalid_pars_expected_output``,
-   ``invalid_vals_expected_output`` and ``input_docker_tag``,
-   and optionally ``docker_registry_host`` and/or ``docker_registry_user``.
+*  The ``subsubtests`` specifies which subtests to run.
+*  Customized configuration for ``flag_args`` and ``searched_info``
    i.e. Copy ``config_defaults/defaults.ini`` to ``config_custom/defaults.ini``
    and modify the values.
 
