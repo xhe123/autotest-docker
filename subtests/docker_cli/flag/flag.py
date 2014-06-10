@@ -12,6 +12,7 @@ exception, don't log any message and are silently ignored.
 
 from dockertest import subtest
 from dockertest.dockercmd import DockerCmd
+from dockertest.dockercmd import MustFailDockerCmd
 from dockertest.images import DockerImage
 from dockertest.containers import DockerContainers
 
@@ -37,18 +38,20 @@ class flag(subtest.Subtest):
         args.append(fin)
         args.append("/bin/bash")
         args.append("-c")
-        args.append("echo negative test for docker flags")
-        dc = DockerCmd(self, self.config["flag_args"], args)
+        args.append("\"echo negative test for docker flags\"")
+        dc = MustFailDockerCmd(self, self.config["flag_args"], args)
         self.stuff["cmdresult"] = dc.execute()
 
     def postprocess(self):
         super(flag, self).postprocess()
-        status = self.stuff["cmdresult"].exit_status
+        stderr = self.stuff['cmdresult'].stderr
         # searched_info is warning/error/usage output like what we expected
         searched_info = self.config["searched_info"]
         self.logdebug("Verifying expected '%s' is in stderr", searched_info)
-        self.failif(status == 0, "Unexpected command success: %s"
-                    % self.stuff['cmdresult'])
+        # when exit code!=0, it'll fail if the info expected is not in stderr
+        self.failif(searched_info not in stderr , "The output expected '%s'"
+                    "not found in the docker output: %s"
+                    % (searched_info, stderr))
 
     def cleanup(self):
         super(flag, self).cleanup()
