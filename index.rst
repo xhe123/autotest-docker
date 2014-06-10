@@ -457,6 +457,32 @@ and pre-defined build-content.
 *  The location of the statically linked ``busybox`` executable
    is specified by the ``busybox_url`` option.
 
+``docker_cli/build_paths`` Sub-test
+======================================
+
+Tests the ``docker build`` against a list of docker build paths or git
+locations.
+
+``docker_cli/build_paths`` Prerequisites
+------------------------------------------
+
+*  Valid docker build paths or git locations with a Dockerfile
+
+``docker_cli/build_paths`` Configuration
+-------------------------------------------
+
+*  ``build_paths`` is a csv list of docker build paths or
+   git locations.  Paths may be relative to the subtest's directory
+   or absolute.  They will copied, and the base image (``FROM`` line) updated
+   based on the standard ``docker_repo_name``, ``docker_repo_tag``
+   ``docker_registry_host``, and ``docker_registry_user`` options.
+*  ``build_args`` are args passed directly to ``docker build``.
+*  ``image_repo_name`` lets you name the ``REPOSITORY`` of the images built.
+   Only applies if ``--tag`` is not used in ``build_args``
+*  ``image_tag_postfix`` lets you add a postfix to the randomly generated
+   ``TAG`` of the images built. Only applies if ``--tag`` is not
+   used in ``build_args``.
+
 ``docker_cli/dockerimport`` Sub-test
 =======================================
 
@@ -1122,7 +1148,27 @@ properly.
    and optionally ``docker_registry_host`` and/or ``docker_registry_user``.
    i.e. Copy ``config_defaults/defaults.ini`` to ``config_custom/defaults.ini``
    and modify the values.
-*  The option ``positive``, sets the pass/fail logic for results processing.
+*  The option ``expect_success``, sets the pass/fail logic for results processing.
+*  The option ``memory_value``, sets a quantity of memory to check
+*  Invalid range testing uses the options ``memory_min_invalid`` and
+   ``memory_max_invalid``.
+
+
+``docker_cli/syslog`` Sub-test
+=================================
+
+Simple test that checks monitoring containers logs from host 
+via bind-mount /dev/log to containers.
+
+``docker_cli/syslog`` Prerequisites
+-------------------------------------
+
+*  Docker daemon is running and accessible by it's unix socket.
+*  /dev/log is existing and could be mounted to containers.
+
+``docker_cli/syslog`` Configuration
+--------------------------------------
+
 
 ``docker_cli/flag`` Sub-test
 =================================
@@ -1175,6 +1221,9 @@ subtests easier.  They hide some of the autotest ``test.test``
 complexity, while providing some helper methods for logging
 output to the controlling terminal (only) and automatically
 loading the specified configuration section (see `configuration module`_)
+
+.. autoclass:: dockertest.subtest.SubBase
+   :members:
 
 .. autoclass:: dockertest.subtest.Subtest
    :members:
